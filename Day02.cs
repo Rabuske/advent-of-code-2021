@@ -53,7 +53,7 @@ class Day02 : IDayCommand {
                 return (separatedLine[0], int.Parse(separatedLine[1]));
             }).ToList();
         
-        return $"The result of the multiplication of positions of part 1 is {Part01(commands)} \n" +
+        return $"The result of the multiplication of positions of part 1 is {Part01(commands)}" + Environment.NewLine +
                $"The result of the multiplication of positions of part 2 is {Part02(commands)}" ;
     }
 
