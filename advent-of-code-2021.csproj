@@ -6,6 +6,7 @@
     <RootNamespace>advent_of_code_2021</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
   </PropertyGroup>
 
 </Project>
