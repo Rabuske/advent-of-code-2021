@@ -102,7 +102,6 @@ class Day04 : IDayCommand {
 
     public string Execute() {
         var fileContent = new FileReader(04).Read().ToList();
-        var test = fileContent[0].Split(" ");
         List<int> numbersToDrawn = fileContent[0].Split(",").Select(n => int.Parse(n)).ToList();
         List<BingoBoard> boards = BuildBoards(fileContent.Skip(2).ToList());
 
