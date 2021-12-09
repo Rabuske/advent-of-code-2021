@@ -12,13 +12,11 @@ class MapLocation {
     }
 
     public List<MapLocation> GetBasin() {
-        var flowingNeighbors = Neighbors.Where(n => n.Height > Height);
         var accountedLocations = new HashSet<MapLocation>();
-        accountedLocations.Add(this);
-        return flowingNeighbors.SelectMany(n => n.GetBasin(accountedLocations)).Append(this).ToList();
+        return GetBasin(accountedLocations);
     }
 
-    public List<MapLocation> GetBasin(HashSet<MapLocation> alreadyAccountedLocations) {
+    private List<MapLocation> GetBasin(HashSet<MapLocation> alreadyAccountedLocations) {
         if(alreadyAccountedLocations.Contains(this) || Height == 9) return new List<MapLocation>();
         alreadyAccountedLocations.Add(this);
         var flowingNeighbors = Neighbors.Where(n => n.Height > Height);
