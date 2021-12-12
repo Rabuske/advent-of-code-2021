@@ -27,11 +27,7 @@ class BingoBoard {
     }
 
     private bool HasNumberBeenDrawn(int number) {
-        foreach (var drawnNumber in _drawnNumbers)
-        {
-            if(drawnNumber.number == number) return true; 
-        }
-        return false;
+        return _drawnNumbers.Any(d => d.number == number);
     }
 
     public int CalculateScore() {
