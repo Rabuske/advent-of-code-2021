@@ -9,4 +9,15 @@
     
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <OutputType>Exe</OutputType>
+      <RootNamespace>advent_of_code_2021</RootNamespace>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <Nullable>enable</Nullable>
+      <TargetFramework>net6.0</TargetFramework>
+      <DebugSymbols>false</DebugSymbols>
+      <DebugType>portable</DebugType>
+      <Optimize>true</Optimize>
+  </PropertyGroup>  
+
 </Project>
