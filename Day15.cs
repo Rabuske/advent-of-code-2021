@@ -8,47 +8,34 @@ class RiskLevel {
     }
 
 }
-
-struct RiskAndPath {
-    public int RiskLevelSum {get; set;}
-    public List<RiskLevel> Path {get; set;}
-
-    public RiskAndPath(int risk, List<RiskLevel> path){
-        RiskLevelSum = risk;
-        Path = path;
-    }
-}
-
 class Day15 : IDayCommand {
 
     public List<RiskLevel> GetOptimalPath(List<List<RiskLevel>> map) {
         RiskLevel endNode = map[map.Count() - 1][map[0].Count() - 1];
 
         var alreadyVisitedNodes = new HashSet<RiskLevel>();
-        var paths = new List<RiskAndPath>();
+        var paths = new PriorityQueue<(int riskSum, RiskLevel[] path),int>();
 
-        paths.Add(new RiskAndPath(0, new List<RiskLevel>(){map[0][0]}));
-
-        do{
-            var currentPath = paths.First();
-            paths.RemoveAt(0);
-            
-            var currentNode = currentPath.Path.Last();
+        paths.Enqueue((0, new RiskLevel[]{map[0][0]}), 0);
+        
+        do{            
+            var currentPath = paths.Dequeue();            
+            var currentNode = currentPath.path.Last();
             if(currentNode == endNode) {
-                return currentPath.Path;
+                return currentPath.path.ToList();
             }
             if(alreadyVisitedNodes.Contains(currentNode)){
                 continue;
             }
             alreadyVisitedNodes.Add(currentNode);
 
-            paths = currentNode.AdjacentNodes.Except(alreadyVisitedNodes)
-                .Select(adjacent => new RiskAndPath(
-                    currentPath.RiskLevelSum + adjacent.Value,
-                    currentPath.Path.Select(p => p).Append(adjacent).ToList()
-                )
-            ).Concat(paths).OrderBy(p => p.RiskLevelSum).ToList();
-
+            paths.EnqueueRange(
+                currentNode.AdjacentNodes.Where(n => !alreadyVisitedNodes.Contains(n))
+                .Select(adjNode => {
+                    var risk = currentPath.riskSum + adjNode.Value;
+                    return ((risk, currentPath.path.Append(adjNode).ToArray()), risk);
+                })
+            );
         } while(true);
     }
 
