@@ -15,18 +15,49 @@ class Map <T> {
             {
                 var currentNode = mapAsArray[i][j];
                 Nodes.Add(currentNode);
-                if(i - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j]);
-                if(i + 1 < map.Count()) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j]);
-                if(j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i][j-1]);
-                if(j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i][j+1]);
+                if(i - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j], -1);
+                if(i + 1 < map.Count()) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j], -1);
+                if(j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i][j-1], -1);
+                if(j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i][j+1], -1);
 
                 if(considerDiagonals) {
-                    if(i - 1 >= 0 && j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j-1]);
-                    if(i - 1 >= 0 && j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j+1]);
-                    if(i + 1 < map.Count() && j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j-1]);
-                    if(i + 1 < map.Count() && j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j+1]);
+                    if(i - 1 >= 0 && j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j-1], -1);
+                    if(i - 1 >= 0 && j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j+1], -1);
+                    if(i + 1 < map.Count() && j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j-1], -1);
+                    if(i + 1 < map.Count() && j + 1 < mapAsArray[i].Count()) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j+1], -1);
                 }
             }
         }
     }
+
+    public List<Node<T>> GetOptimalPath(Node<T> start, Node<T> end) {
+        var alreadyVisitedNodes = new HashSet<Node<T>>();
+        var paths = new PriorityQueue<(int costSum, Node<T>[] path),int>();
+
+        paths.Enqueue((0, new Node<T>[]{start}), 0);
+        
+        do{     
+            // There is no solution       
+            if(alreadyVisitedNodes.Count() == Nodes.Count()) {
+                return new List<Node<T>>();
+            }
+            var currentPath = paths.Dequeue();            
+            var currentNode = currentPath.path.Last();
+            if(currentNode == end) {
+                return currentPath.path.ToList();
+            }
+            if(alreadyVisitedNodes.Contains(currentNode)){
+                continue;
+            }
+            alreadyVisitedNodes.Add(currentNode);
+
+            paths.EnqueueRange(
+                currentNode.AdjacentNodes.Where(n => !alreadyVisitedNodes.Contains(n.Key))
+                .Select(adjNode => {
+                    var risk = currentPath.costSum + currentNode.GetTravelCostTo(adjNode.Key);
+                    return ((risk, currentPath.path.Append(adjNode.Key).ToArray()), risk);
+                })
+            );
+        } while(true);
+    }    
 }
