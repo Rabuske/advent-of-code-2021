@@ -5,9 +5,9 @@ class Day11: IDayCommand {
         alreadyFlashed.Add(node);
         node.Value = 0;        
         // Increase Energy of Neighbors
-        node.AdjacentNodes.ForEach(n => IncreaseEnergy(alreadyFlashed, n));
+        node.AdjacentNodes.Keys.ToList().ForEach(n => IncreaseEnergy(alreadyFlashed, n));
         // Process Neighbors
-        node.AdjacentNodes.ForEach(n => Flash(alreadyFlashed, n));
+        node.AdjacentNodes.Keys.ToList().ForEach(n => Flash(alreadyFlashed, n));
     }
 
     public void IncreaseEnergy(HashSet<Node<int>> alreadyFlashed, Node<int> node) {
