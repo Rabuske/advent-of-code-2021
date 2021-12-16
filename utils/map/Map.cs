@@ -14,6 +14,7 @@ class Map <T> {
             for (int j = 0; j < mapAsArray[i].Count(); j++)
             {
                 var currentNode = mapAsArray[i][j];
+                Nodes.Add(currentNode);
                 if(i - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i-1][j]);
                 if(i + 1 < map.Count()) currentNode.AdjacentNodes.Add(mapAsArray[i+1][j]);
                 if(j - 1 >= 0) currentNode.AdjacentNodes.Add(mapAsArray[i][j-1]);
