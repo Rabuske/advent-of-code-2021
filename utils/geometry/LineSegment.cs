@@ -7,10 +7,10 @@ class LineSegment {
         this.p2 = p2;
     }
 
-    public (double a, double b, double c) Coefficients() {
-        double a = p2.y - p1.y;
-        double b = p1.x - p2.x;
-        double c = a * p1.x + b * p1.y;
+    public (decimal a, decimal b, decimal c) Coefficients() {
+        decimal a = p2.y - p1.y;
+        decimal b = p1.x - p2.x;
+        decimal c = a * p1.x + b * p1.y;
         return (a, b, c);
     }
 
@@ -58,13 +58,13 @@ class LineSegment {
         return det == 0;        
     }
 
-    public double? GetSlope() {
+    public decimal? GetSlope() {
         var coefficients = Coefficients();
         if(coefficients.b == 0) return null; // Vertical Line
         return coefficients.a / coefficients.b;
     }
 
-    public double? GetYForX(double x) {
+    public decimal? GetYForX(decimal x) {
         var slope = GetSlope();
         if(slope == null) return null; // Vertical Line
         
@@ -75,8 +75,8 @@ class LineSegment {
     public List<Point2D> GetMultipleIntersectionPoints(LineSegment line) {
         List<Point2D> resultingPoints = new List<Point2D>();
         if(IsParallel(line)) {
-            double? yAtX0ForLine1 = GetYForX(0);
-            double? yAtX0ForLine2 = line.GetYForX(0);
+            decimal? yAtX0ForLine1 = GetYForX(0);
+            decimal? yAtX0ForLine2 = line.GetYForX(0);
             if(
                 ((yAtX0ForLine1 == null || yAtX0ForLine2 == null) && this.p1.x == line.p1.x) // Vertical lines that are under the same X
                 || (yAtX0ForLine1 == yAtX0ForLine2 && yAtX0ForLine1 != null)) // Parallel lines that have the same slope and cross the origin at the same Y
