@@ -15,21 +15,24 @@ record DistanceBetweenPoints(decimal distance, Point3DRecord point1, Point3DReco
 
 class Scanner {
     public int Id {get; init;}
-    public HashSet<Point3DRecord> Detected {get; set;}
+    public HashSet<Point3DRecord> Beacons {get; set;}
     private List<HashSet<Point3DRecord>> _arrangements;  
+
+    private Dictionary<Point3DRecord, Point3DRecord> _vectorBetweenBeacons;
 
     public Point3DRecord Translation {get; set;} 
     
 
     public Scanner(int id) {
         Id = id;
-        Detected = new HashSet<Point3DRecord>();
+        Beacons = new HashSet<Point3DRecord>();
         _arrangements = new List<HashSet<Point3DRecord>>();
+        _vectorBetweenBeacons = new Dictionary<Point3DRecord, Point3DRecord>();
         Translation = new (0, 0, 0);
     }
 
 
-    public IEnumerable<Func<Point3DRecord, Point3DRecord>> GetArrangements() {
+    public IEnumerable<Func<Point3DRecord, Point3DRecord>> GetArrangementFunctions() {
         yield return v => new(v.x, -v.z, v.y);
         yield return v => new(v.x, -v.y, -v.z);
         yield return v => new(v.x, v.z, -v.y);
@@ -62,19 +65,18 @@ class Scanner {
 
     public bool TryCombine(Scanner s, out Scanner result) {
         result = new Scanner(this.Id);            
-        var vectors = GetVectors();
 
-        foreach (var arrangement in GetArrangements())
+        foreach (var arrange in GetArrangementFunctions())
         {
-            if (IsValidArrangement(vectors, s.Detected, arrangement, out var translation))
+            if (IsValidArrangement(s.Beacons, arrange, out var translation))
             {
-                result.Detected = this.Detected.Select(s => s).ToHashSet();    
-                foreach (var beacon in s.Detected)
+                result.Beacons = this.Beacons.Select(s => s).ToHashSet();    
+                foreach (var beacon in s.Beacons)
                 {  
                     s.Translation = translation;
-                    var resultingBeacon = arrangement(beacon);
+                    var resultingBeacon = arrange(beacon);
                     resultingBeacon = resultingBeacon + translation;
-                    result.Detected.Add(resultingBeacon);
+                    result.Beacons.Add(resultingBeacon);
                 }
                 return true;                
             }
@@ -83,22 +85,23 @@ class Scanner {
         return false;
     }
 
-    private static bool IsValidArrangement(Dictionary<Point3DRecord, Point3DRecord> vectors, HashSet<Point3DRecord> beacons, Func<Point3DRecord, Point3DRecord> arrangement, out Point3DRecord translation)
+    private bool IsValidArrangement(HashSet<Point3DRecord> beacons, Func<Point3DRecord, Point3DRecord> arrange, out Point3DRecord translation)
     {
+        var vectorsBetweenPoints = GetVectorsBetweenBeacons();
         int count = 0;
         foreach (var b1 in beacons)
         {
-            Point3DRecord b1Rotated = arrangement(b1);
+            Point3DRecord b1Rotated = arrange(b1);
             foreach (var b2 in beacons)
             {
                 if (b1 == b2) continue;
 
-                Point3DRecord b2Rotated = arrangement(b2);
+                Point3DRecord b2Rotated = arrange(b2);
                 Point3DRecord vector = b1Rotated - b2Rotated;
 
-                if (vectors.ContainsKey(vector) && ++count == 11)
+                if (vectorsBetweenPoints.ContainsKey(vector) && ++count == 11)
                 {
-                    translation = b1Rotated - vectors[vector];
+                    translation = b1Rotated - vectorsBetweenPoints[vector];
                     return true;
                 }
             }
@@ -108,22 +111,22 @@ class Scanner {
         return false;
     }
 
-    private Dictionary<Point3DRecord, Point3DRecord> GetVectors()
+    private Dictionary<Point3DRecord, Point3DRecord> GetVectorsBetweenBeacons()
     {
-        Dictionary<Point3DRecord, Point3DRecord> vectors = new();
-        foreach (var p1 in Detected)
+        if(_vectorBetweenBeacons.Count() > 0) return _vectorBetweenBeacons;
+        foreach (var b1 in Beacons)
         {
-            foreach (var p2 in Detected)
+            foreach (var b2 in Beacons)
             {
-                if (p1 == p2) continue;
-                Point3DRecord vector = p2 - p1;
-                if (!vectors.ContainsKey(vector))
+                if (b1 == b2) continue;
+                Point3DRecord vector = b2 - b1;
+                if (!_vectorBetweenBeacons.ContainsKey(vector))
                 {
-                    vectors.Add(vector, p2);
+                    _vectorBetweenBeacons.Add(vector, b2);
                 }
             }
         }
-        return vectors;
+        return _vectorBetweenBeacons;
     }
 }
 
@@ -134,14 +137,14 @@ class Day19 : IDayCommand {
 
         foreach (var line in input)
         {
-            if(line.Length <= 1) continue;
+            if(string.IsNullOrEmpty(line)) continue;
             if(line.StartsWith("---")){
                 var scannerId = int.Parse(line.Replace("--- scanner", "").Replace("-", "").Trim());
                 parsed.Add(new Scanner(scannerId));
                 continue;
             }
             var numbers = line.Split(",").Select(i => int.Parse(i)).ToArray();
-            parsed.Last().Detected.Add(new Point3DRecord(numbers[0], numbers[1], numbers[2]));
+            parsed.Last().Beacons.Add(new Point3DRecord(numbers[0], numbers[1], numbers[2]));
         }
 
         return parsed;
@@ -176,6 +179,6 @@ class Day19 : IDayCommand {
             }            
         }
         
-        return $"The number of beacons is {resultScanner.Detected.Count()} and the max distance between scanners is {maxDistance}";
+        return $"The number of beacons is {resultScanner.Beacons.Count()} and the max distance between scanners is {maxDistance}";
     }
 }
