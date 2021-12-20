@@ -19,10 +19,10 @@ class Point3D {
     }
 
     public static Point3D operator -(Point3D p1, Point3D p2) {
-        return new Point3D(Math.Abs(p1.x - p2.x), Math.Abs(p1.y - p2.y), Math.Abs(p1.z - p2.z));
+        return new Point3D(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
     }
     
-    public bool SamePoint(Point3D p) => x == p.x && y == p.y && z == p.z;
+    public bool IsSamePoint(Point3D p) => x == p.x && y == p.y && z == p.z;
 
     public decimal ManhattanDistance(Point3D p) {
         return Math.Abs(this.x - p.x) + Math.Abs(this.y - p.y) +  Math.Abs(this.z - p.z);

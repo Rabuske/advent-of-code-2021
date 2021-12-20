@@ -1,125 +1,129 @@
-record Beacon(int x, int y, int z){
-    public static Beacon operator -(Beacon p1, Beacon p2) {
-        return new Beacon(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+record Point3DRecord(int x, int y, int z){
+    public static Point3DRecord operator -(Point3DRecord p1, Point3DRecord p2) {
+        return new Point3DRecord(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
     }   
 
-    public int ManhattanDistance(Beacon p) {
+    public static Point3DRecord operator +(Point3DRecord p1, Point3DRecord p2) {
+        return new Point3DRecord(p2.x + p1.x, p2.y + p1.y, p2.z + p1.z);
+    }       
+
+    public int ManhattanDistance(Point3DRecord p) {
         return Math.Abs(this.x - p.x) + Math.Abs(this.y - p.y) +  Math.Abs(this.z - p.z);
     } 
 }
-record DistanceBetweenPoints(decimal distance, Beacon point1, Beacon point2);
+record DistanceBetweenPoints(decimal distance, Point3DRecord point1, Point3DRecord point2);
 
 class Scanner {
     public int Id {get; init;}
-    public HashSet<Beacon> Detected {get; set;}
-    private List<HashSet<Beacon>> _arrangements;  
-    private List<DistanceBetweenPoints> _distances;
+    public HashSet<Point3DRecord> Detected {get; set;}
+    private List<HashSet<Point3DRecord>> _arrangements;  
+
+    public Point3DRecord Translation {get; set;} 
     
 
     public Scanner(int id) {
         Id = id;
-        Detected = new HashSet<Beacon>();
-        _arrangements = new List<HashSet<Beacon>>();
-        _distances = new List<DistanceBetweenPoints>();
+        Detected = new HashSet<Point3DRecord>();
+        _arrangements = new List<HashSet<Point3DRecord>>();
+        Translation = new (0, 0, 0);
     }
 
 
-    public List<HashSet<Beacon>> GetAllArrangements() {
-        if(_arrangements.Count() > 0) return _arrangements;
-        //positive x
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.x,+p.y,+p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.x,-p.z,+p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.x,-p.y,-p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.x,+p.z,-p.y)).ToHashSet());
-        //negative x
-        _arrangements.Add(Detected.Select(p => new Beacon(p.x,-p.y,+p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(p.x,+p.z,+p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(p.x,+p.y,-p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(p.x,-p.z,-p.y)).ToHashSet());
-        //positive y
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.y,+p.z,+p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.y,-p.x,+p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.y,-p.z,-p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.y,+p.x,-p.z)).ToHashSet());
-        //negative y
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.y,-p.z,+p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.y,+p.x,+p.z)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.y,+p.z,-p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.y,-p.x,-p.z)).ToHashSet());
-        //positive z
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.z,+p.x,+p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.z,-p.y,+p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.z,-p.x,-p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(+p.z,+p.y,-p.x)).ToHashSet());
-        //negative z
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.z,-p.x,+p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.z,+p.y,+p.x)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.z,+p.x,-p.y)).ToHashSet());
-        _arrangements.Add(Detected.Select(p => new Beacon(-p.z,-p.y,-p.x)).ToHashSet());
+    public IEnumerable<Func<Point3DRecord, Point3DRecord>> GetArrangements() {
+        yield return v => new(v.x, -v.z, v.y);
+        yield return v => new(v.x, -v.y, -v.z);
+        yield return v => new(v.x, v.z, -v.y);
 
-        return _arrangements;        
+        yield return v => new(-v.y, v.x, v.z);
+        yield return v => new(v.z, v.x, v.y);
+        yield return v => new(v.y, v.x, -v.z);
+        yield return v => new(-v.z, v.x, -v.y);
+
+        yield return v => new(-v.x, -v.y, v.z);
+        yield return v => new(-v.x, -v.z, -v.y);
+        yield return v => new(-v.x, v.y, -v.z);
+        yield return v => new(-v.x, v.z, v.y);
+
+        yield return v => new(v.y, -v.x, v.z);
+        yield return v => new(v.z, -v.x, -v.y);
+        yield return v => new(-v.y, -v.x, -v.z);
+        yield return v => new(-v.z, -v.x, v.y);
+
+        yield return v => new(-v.z, v.y, v.x);
+        yield return v => new(v.y, v.z, v.x);
+        yield return v => new(v.z, -v.y, v.x);
+        yield return v => new(-v.y, -v.z, v.x);
+
+        yield return v => new(-v.z, -v.y, -v.x);
+        yield return v => new(-v.y, v.z, -v.x);
+        yield return v => new(v.z, v.y, -v.x);
+        yield return v => new(v.y, -v.z, -v.x);
     }
 
     public bool TryCombine(Scanner s, out Scanner result) {
-        var arrangements = s.GetAllArrangements();
-        result = new Scanner(this.Id);
-        // Brute force again
+        result = new Scanner(this.Id);            
+        var vectors = GetVectors();
 
-        if(!ShouldTryToCombine(s)) {
-            return false;
-        }
-
-        foreach (var arrangement in arrangements)
+        foreach (var arrangement in GetArrangements())
         {
-            foreach (var point1 in Detected)
+            if (IsValidArrangement(vectors, s.Detected, arrangement, out var translation))
             {
-                foreach (var point2 in arrangement)
-                {
-                    var translation = point2 - point1;
-                    if(IsMatching(translation, arrangement)) {
-                        result.Detected = this.Detected.Select(s => s).ToHashSet();    
-                        foreach (var beacon in arrangement)
-                        {
-                            result.Detected.Add(beacon - translation);
-                        }
-                        return true;
-                    }
+                result.Detected = this.Detected.Select(s => s).ToHashSet();    
+                foreach (var beacon in s.Detected)
+                {  
+                    s.Translation = translation;
+                    var resultingBeacon = arrangement(beacon);
+                    resultingBeacon = resultingBeacon + translation;
+                    result.Detected.Add(resultingBeacon);
                 }
+                return true;                
             }
         }
 
         return false;
     }
 
-    private bool ShouldTryToCombine(Scanner s)
+    private static bool IsValidArrangement(Dictionary<Point3DRecord, Point3DRecord> vectors, HashSet<Point3DRecord> beacons, Func<Point3DRecord, Point3DRecord> arrangement, out Point3DRecord translation)
     {
-        var distance1 = s.GetDistancesBetweenPoints();
-        var distance2 = GetDistancesBetweenPoints();
-        var sameDistance = distance1.Where(d1 => distance2.Any(d2 => d2.distance == d1.distance));
-        var distinctPoints = sameDistance.SelectMany(d => new List<Beacon>(){d.point1, d.point2}).Distinct().ToList();
-        var candidates = distinctPoints.Select(p1 => sameDistance.Count(p2 => (p2.point1 == p1 || p2.point2 == p1))).Where(c => c >= 12);
-        return candidates.Count() > 0;
+        int count = 0;
+        foreach (var b1 in beacons)
+        {
+            Point3DRecord b1Rotated = arrangement(b1);
+            foreach (var b2 in beacons)
+            {
+                if (b1 == b2) continue;
+
+                Point3DRecord b2Rotated = arrangement(b2);
+                Point3DRecord vector = b1Rotated - b2Rotated;
+
+                if (vectors.ContainsKey(vector) && ++count == 11)
+                {
+                    translation = b1Rotated - vectors[vector];
+                    return true;
+                }
+            }
+        }
+
+        translation = new (0,0,0);
+        return false;
     }
 
-    private List<DistanceBetweenPoints> GetDistancesBetweenPoints() {
-        if(_distances.Count() > 0) return _distances;
+    private Dictionary<Point3DRecord, Point3DRecord> GetVectors()
+    {
+        Dictionary<Point3DRecord, Point3DRecord> vectors = new();
         foreach (var p1 in Detected)
         {
             foreach (var p2 in Detected)
             {
-                if(p1 == p2) continue;
-                _distances.Add(new DistanceBetweenPoints(p1.ManhattanDistance(p2), p1, p2));         
-            }   
+                if (p1 == p2) continue;
+                Point3DRecord vector = p2 - p1;
+                if (!vectors.ContainsKey(vector))
+                {
+                    vectors.Add(vector, p2);
+                }
+            }
         }
-        return _distances;
-    }
-
-    private bool IsMatching(Beacon translation, HashSet<Beacon> arrangement)
-    {
-        var tranlatedPoints = arrangement.Select(p => p - translation);
-
-        var resulting = tranlatedPoints.Where(t => Detected.Contains(t));
-        return resulting.Count() >= 12;
+        return vectors;
     }
 }
 
@@ -137,7 +141,7 @@ class Day19 : IDayCommand {
                 continue;
             }
             var numbers = line.Split(",").Select(i => int.Parse(i)).ToArray();
-            parsed.Last().Detected.Add(new Beacon(numbers[0], numbers[1], numbers[2]));
+            parsed.Last().Detected.Add(new Point3DRecord(numbers[0], numbers[1], numbers[2]));
         }
 
         return parsed;
@@ -146,42 +150,32 @@ class Day19 : IDayCommand {
     public string Execute() {
         var scanners = Parse(new FileReader(19).Read().ToList());
 
-        var scannersToInclude = scanners.Skip(1).ToList();
         var resultScanner = scanners.First();
+        var remainingScanners = scanners.Skip(1).ToList();
 
-        var scannedPairs = new HashSet<(Scanner p1, Scanner p2)>();
-        while (scanners.Count() > 1)
-        {
-            Console.WriteLine($"Scanners left: {scanners.Count()}");
-
-            var removeScanners = new List<Scanner>();
-
-            for (int i = 0; i < scanners.Count() - 1; i++)
+        while(remainingScanners.Count() > 0) {
+            var scannerToRemove = new List<Scanner>();
+            foreach (var scanner in remainingScanners)
             {
-                for (int j = i + 1; j < scanners.Count(); j++)
-                {
-                    if (scannedPairs.Contains((scanners[i], scanners[j])))
-                    {
-                        continue;
-                    }
+                if(resultScanner.TryCombine(scanner, out var combined)){
+                    scannerToRemove.Add(scanner);
+                    resultScanner = combined;
+                }   
+            }
+            scannerToRemove.ForEach(x => remainingScanners.Remove(x));
+        }
 
-                    scannedPairs.Add((scanners[i], scanners[j]));
+        var maxDistance = 0;
 
-                    var (first, last) = scanners[i].Detected.Count() > scanners[j].Detected.Count()? (scanners[j], scanners[i]) : (scanners[i], scanners[j]);
-
-                    if (first.TryCombine(last, out var resulting))
-                    {
-                        Console.WriteLine($"Found pair {i} => {j}");
-
-                        scanners[i] = resulting;
-                        removeScanners.Add(scanners[j]);
-                    }
-                }
-                removeScanners.ForEach(x => scanners.Remove(x));
-            }   
-        }        
+        for (int i = 0; i < scanners.Count() - 1; i++)
+        {
+            for (int j = i + 1; j < scanners.Count(); j++)
+            {
+                var distance = scanners[i].Translation.ManhattanDistance(scanners[j].Translation);
+                maxDistance = Math.Max(maxDistance, distance);
+            }            
+        }
         
-        
-        return $"{resultScanner.Detected.Count()}";
+        return $"The number of beacons is {resultScanner.Detected.Count()} and the max distance between scanners is {maxDistance}";
     }
 }
