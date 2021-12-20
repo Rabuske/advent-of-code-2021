@@ -1,4 +1,4 @@
-class Point3D {
+record Point3D {
 
     public decimal x {get; init;}
     public decimal y {get; init;}
@@ -22,15 +22,13 @@ class Point3D {
         return new Point3D(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
     }
     
-    public bool IsSamePoint(Point3D p) => x == p.x && y == p.y && z == p.z;
-
     public decimal ManhattanDistance(Point3D p) {
         return Math.Abs(this.x - p.x) + Math.Abs(this.y - p.y) +  Math.Abs(this.z - p.z);
     }
 
     public override string ToString(){
         return $"({this.x},{this.y},{this.z})";
-    }
+    }   
 }
 
 record Point3DRecord(int x, int y, int z){
