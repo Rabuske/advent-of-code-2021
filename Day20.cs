@@ -3,11 +3,20 @@ class Day20 : IDayCommand {
     public bool TransformToBinary(char input) => input == '#';
 
     public bool GetRealValueConsideringInfinity(Point2D coords, Dictionary<Point2D, bool> image,  int enhancementStep, List<bool> decoder) {
-        // It is considered an infinity point, if neither it exists, or its neighbors exist
         if(image.ContainsKey(coords)) return image[coords];
+        
+        // An infinity point is a pixel that is not in the image it initial state is the following:
+        // ...
+        // ...
+        // ...
+        // If the decoder at 0 is true, it will change all its states (in a odd step) to the following:
+        // ###
+        // ###
+        // ###
+        // Now, if the last position of the decoder is false, it will change all its states again (in a even step)
+        if(decoder.First() && enhancementStep % 2 == 1) return true;
+        if(decoder.First()) return decoder.Last();
 
-        // if the decoder at 000000000 is true, it negates the input each step, so in an odd step it is true and in an even step it is false
-        if(decoder[0] && enhancementStep % 2 == 1) return true;
         return false;
     }   
     
