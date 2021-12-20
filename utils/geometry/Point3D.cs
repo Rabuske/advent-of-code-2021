@@ -32,3 +32,17 @@ class Point3D {
         return $"({this.x},{this.y},{this.z})";
     }
 }
+
+record Point3DRecord(int x, int y, int z){
+    public static Point3DRecord operator -(Point3DRecord p1, Point3DRecord p2) {
+        return new Point3DRecord(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+    }   
+
+    public static Point3DRecord operator +(Point3DRecord p1, Point3DRecord p2) {
+        return new Point3DRecord(p2.x + p1.x, p2.y + p1.y, p2.z + p1.z);
+    }       
+
+    public int ManhattanDistance(Point3DRecord p) {
+        return Math.Abs(this.x - p.x) + Math.Abs(this.y - p.y) +  Math.Abs(this.z - p.z);
+    } 
+}

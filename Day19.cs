@@ -1,18 +1,3 @@
-record Point3DRecord(int x, int y, int z){
-    public static Point3DRecord operator -(Point3DRecord p1, Point3DRecord p2) {
-        return new Point3DRecord(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
-    }   
-
-    public static Point3DRecord operator +(Point3DRecord p1, Point3DRecord p2) {
-        return new Point3DRecord(p2.x + p1.x, p2.y + p1.y, p2.z + p1.z);
-    }       
-
-    public int ManhattanDistance(Point3DRecord p) {
-        return Math.Abs(this.x - p.x) + Math.Abs(this.y - p.y) +  Math.Abs(this.z - p.z);
-    } 
-}
-record DistanceBetweenPoints(decimal distance, Point3DRecord point1, Point3DRecord point2);
-
 class Scanner {
     public int Id {get; init;}
     public HashSet<Point3DRecord> Beacons {get; set;}
