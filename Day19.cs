@@ -1,23 +1,23 @@
 class Scanner {
     public int Id {get; init;}
-    public HashSet<Point3DRecord> Beacons {get; set;}
-    private List<HashSet<Point3DRecord>> _arrangements;  
+    public HashSet<Point3D> Beacons {get; set;}
+    private List<HashSet<Point3D>> _arrangements;  
 
-    private Dictionary<Point3DRecord, Point3DRecord> _vectorBetweenBeacons;
+    private Dictionary<Point3D, Point3D> _vectorBetweenBeacons;
 
-    public Point3DRecord Translation {get; set;} 
+    public Point3D Translation {get; set;} 
     
 
     public Scanner(int id) {
         Id = id;
-        Beacons = new HashSet<Point3DRecord>();
-        _arrangements = new List<HashSet<Point3DRecord>>();
-        _vectorBetweenBeacons = new Dictionary<Point3DRecord, Point3DRecord>();
+        Beacons = new HashSet<Point3D>();
+        _arrangements = new List<HashSet<Point3D>>();
+        _vectorBetweenBeacons = new Dictionary<Point3D, Point3D>();
         Translation = new (0, 0, 0);
     }
 
 
-    public IEnumerable<Func<Point3DRecord, Point3DRecord>> GetArrangementFunctions() {
+    public IEnumerable<Func<Point3D, Point3D>> GetArrangementFunctions() {
         yield return v => new(v.x, -v.z, v.y);
         yield return v => new(v.x, -v.y, -v.z);
         yield return v => new(v.x, v.z, -v.y);
@@ -70,23 +70,23 @@ class Scanner {
         return false;
     }
 
-    private bool IsValidArrangement(HashSet<Point3DRecord> beacons, Func<Point3DRecord, Point3DRecord> arrange, out Point3DRecord translation)
+    private bool IsValidArrangement(HashSet<Point3D> beacons, Func<Point3D, Point3D> arrange, out Point3D translation)
     {
         var vectorsBetweenPoints = GetVectorsBetweenBeacons();
         int count = 0;
         foreach (var b1 in beacons)
         {
-            Point3DRecord b1Rotated = arrange(b1);
+            Point3D b1Rotated = arrange(b1);
             foreach (var b2 in beacons)
             {
                 if (b1 == b2) continue;
 
-                Point3DRecord b2Rotated = arrange(b2);
-                Point3DRecord vector = b1Rotated - b2Rotated;
+                Point3D b2Rotated = arrange(b2);
+                Point3D vector = b2Rotated - b1Rotated;
 
                 if (vectorsBetweenPoints.ContainsKey(vector) && ++count == 11)
                 {
-                    translation = b1Rotated - vectorsBetweenPoints[vector];
+                    translation = vectorsBetweenPoints[vector] - b1Rotated;
                     return true;
                 }
             }
@@ -96,7 +96,7 @@ class Scanner {
         return false;
     }
 
-    private Dictionary<Point3DRecord, Point3DRecord> GetVectorsBetweenBeacons()
+    private Dictionary<Point3D, Point3D> GetVectorsBetweenBeacons()
     {
         if(_vectorBetweenBeacons.Count() > 0) return _vectorBetweenBeacons;
         foreach (var b1 in Beacons)
@@ -104,7 +104,7 @@ class Scanner {
             foreach (var b2 in Beacons)
             {
                 if (b1 == b2) continue;
-                Point3DRecord vector = b2 - b1;
+                Point3D vector = b1 - b2;
                 if (!_vectorBetweenBeacons.ContainsKey(vector))
                 {
                     _vectorBetweenBeacons.Add(vector, b2);
@@ -129,7 +129,7 @@ class Day19 : IDayCommand {
                 continue;
             }
             var numbers = line.Split(",").Select(i => int.Parse(i)).ToArray();
-            parsed.Last().Beacons.Add(new Point3DRecord(numbers[0], numbers[1], numbers[2]));
+            parsed.Last().Beacons.Add(new Point3D(numbers[0], numbers[1], numbers[2]));
         }
 
         return parsed;
@@ -153,7 +153,7 @@ class Day19 : IDayCommand {
             scannerToRemove.ForEach(x => remainingScanners.Remove(x));
         }
 
-        var maxDistance = 0;
+        decimal maxDistance = 0;
 
         for (int i = 0; i < scanners.Count() - 1; i++)
         {
