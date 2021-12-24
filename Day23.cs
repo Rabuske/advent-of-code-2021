@@ -1,338 +1,324 @@
+class AmphipodMap : IEqualityComparer<AmphipodMap> {
+    public List<char> BurrowForA {get; set;}
+    public List<char> BurrowForB {get; set;}
+    public List<char> BurrowForC {get; set;}
+    public List<char> BurrowForD {get; set;}
+    public List<char> UpperChamber {get; set;}
 
-enum BurrowNodeType {
-    ROOM, 
-    HALLWAY
-}
+    public bool IsFinished => 
+        BurrowForA.All(b => b == 'A') &&
+        BurrowForB.All(b => b == 'B') &&
+        BurrowForC.All(b => b == 'C') &&
+        BurrowForD.All(b => b == 'D');
 
-record Amphipod(char id, List<BurrowNode> dest, BurrowNode current, int uniqueId) {
-    public bool IsOk => dest.Contains(current);
-    public override string ToString()
+    public AmphipodMap(int burrowSize = 2) {
+        BurrowForA = Enumerable.Repeat(' ', burrowSize).ToList();
+        BurrowForB = Enumerable.Repeat(' ', burrowSize).ToList();
+        BurrowForC = Enumerable.Repeat(' ', burrowSize).ToList();
+        BurrowForD = Enumerable.Repeat(' ', burrowSize).ToList();
+        UpperChamber = Enumerable.Repeat(' ', 7).ToList();
+    }
+
+    public override string ToString() {
+        string output = "#############" + Environment.NewLine + 
+                        "#EF.G.H.I.JK#" + Environment.NewLine + 
+                        "###O#S#X#1###" + Environment.NewLine + 
+                        "  #N#R#W#0#  " + Environment.NewLine + 
+                        "  #M#Q#U#Z#  " + Environment.NewLine + 
+                        "  #L#P#T#Y#  " + Environment.NewLine + 
+                        "  #########  " + Environment.NewLine;
+
+        output = output.Replace('E', UpperChamber[0]);      
+        output = output.Replace('F', UpperChamber[1]);      
+        output = output.Replace('G', UpperChamber[2]);      
+        output = output.Replace('H', UpperChamber[3]);      
+        output = output.Replace('I', UpperChamber[4]);      
+        output = output.Replace('J', UpperChamber[5]);      
+        output = output.Replace('K', UpperChamber[6]);      
+
+        output = output.Replace('L', BurrowForA[0]);      
+        output = output.Replace('M', BurrowForA[1]);      
+        output = output.Replace('N', BurrowForA.ElementAtOrDefault(2));      
+        output = output.Replace('O', BurrowForA.ElementAtOrDefault(3));      
+
+        output = output.Replace('P', BurrowForB[0]);      
+        output = output.Replace('Q', BurrowForB[1]);      
+        output = output.Replace('R', BurrowForB.ElementAtOrDefault(2));      
+        output = output.Replace('S', BurrowForB.ElementAtOrDefault(3));      
+
+        output = output.Replace('T', BurrowForC[0]);      
+        output = output.Replace('U', BurrowForC[1]);      
+        output = output.Replace('W', BurrowForC.ElementAtOrDefault(2));      
+        output = output.Replace('X', BurrowForC.ElementAtOrDefault(3));      
+
+        output = output.Replace('Y', BurrowForD[0]);      
+        output = output.Replace('Z', BurrowForD[1]);      
+        output = output.Replace('0', BurrowForD.ElementAtOrDefault(2));      
+        output = output.Replace('1', BurrowForD.ElementAtOrDefault(3));
+
+        return output;      
+    }
+
+    public bool Equals(AmphipodMap? a1, AmphipodMap? a2) {
+        if(a1 is null) return a2 is null;
+        if(a2 is null) return a1 is null;
+        return a1.GetHashCode() == a2.GetHashCode();
+    }
+
+    public int GetHashCode(AmphipodMap a) {
+        string total = string.Empty;
+        total += string.Join(",", BurrowForA);
+        total += string.Join(",", BurrowForB);
+        total += string.Join(",", BurrowForC);
+        total += string.Join(",", BurrowForD);
+        total += string.Join(",", UpperChamber);
+        return total.GetHashCode();
+    }
+
+    public override bool Equals(Object? obj) {
+        if(obj is null) return false;
+        return ((AmphipodMap)obj).GetHashCode() == GetHashCode();
+    }
+
+    public override int GetHashCode() {
+        return GetHashCode(this);
+    }    
+
+    private bool NeedsToMoveFromBurrowToUpperChamber(char expected) {
+        return !GetBurrow(expected).All(e => e == expected || e == ' ');
+    }
+
+    private bool CanMoveFromUpperChamberToBurrow(char expected) {
+        // This method does not check if the path is free
+        return GetBurrow(expected).All(e => e == expected || e == ' ');
+    }    
+
+    public List<(AmphipodMap map, int cost)> GetAllPossibleMoves(int currentCost) {
+        var result = new List<(AmphipodMap map, int cost)>();
+        
+        if(NeedsToMoveFromBurrowToUpperChamber('A'))
+        {
+            result = result.Concat(MoveBurrowToChamber(GetLeftUpperChamberIndexRelativeTo('A'), currentCost, 'A')).ToList();
+        }
+
+        if(NeedsToMoveFromBurrowToUpperChamber('B'))
+        {
+            result = result.Concat(MoveBurrowToChamber(GetLeftUpperChamberIndexRelativeTo('B'), currentCost, 'B')).ToList();
+        }
+
+        if(NeedsToMoveFromBurrowToUpperChamber('C'))
+        {
+            result = result.Concat(MoveBurrowToChamber(GetLeftUpperChamberIndexRelativeTo('C'), currentCost, 'C')).ToList();
+        }
+
+        if(NeedsToMoveFromBurrowToUpperChamber('D'))
+        {
+            result = result.Concat(MoveBurrowToChamber(GetLeftUpperChamberIndexRelativeTo('D'), currentCost, 'D')).ToList();
+        }
+
+        // Try to move from chamber to burrow
+        for (int i = 0; i < UpperChamber.Count(); i++)
+        {
+            char processingChar = UpperChamber[i];
+            if(processingChar == ' ') continue;
+            if(!CanMoveFromUpperChamberToBurrow(processingChar)) continue;
+
+            // Left to right
+            if(i <= GetLeftUpperChamberIndexRelativeTo(processingChar)) {
+                var currentPosition = i;
+                var steps = i == 0? 1 : 2;
+                var clearPath = true;
+                while(currentPosition < GetLeftUpperChamberIndexRelativeTo(processingChar)) {
+                    currentPosition += 1;
+                    steps += 2;
+                    if(UpperChamber[currentPosition] != ' ') clearPath = false;
+                }
+                if(clearPath) {
+                    steps += GetBurrow(processingChar).Count(e => e == ' ') - 1; // We already start with 2 steps
+                    var newMap = Clone();
+                    var indexAtBurrow = newMap.GetBurrow(processingChar).IndexOf(' ');
+                    newMap.GetBurrow(processingChar)[indexAtBurrow] = processingChar;
+                    newMap.UpperChamber[i] = ' ';
+                    result.Add((newMap, currentCost + steps * GetEnergy(processingChar)));
+                }
+            }
+            // Right to left  
+            else {
+                var currentPosition = i;
+                var steps = i == UpperChamber.Count() - 1? 1 : 2;
+                var clearPath = true;
+                while(currentPosition > GetLeftUpperChamberIndexRelativeTo(processingChar) + 1) {
+                    currentPosition -= 1;
+                    steps += 2;
+                    if(UpperChamber[currentPosition] != ' ') clearPath = false;
+                }
+                if(clearPath) {
+                    steps += GetBurrow(processingChar).Count(e => e == ' ') - 1; // We already start with 2 steps
+                    var newMap = Clone();
+                    var indexAtBurrow = newMap.GetBurrow(processingChar).IndexOf(' ');
+                    newMap.GetBurrow(processingChar)[indexAtBurrow] = processingChar;
+                    newMap.UpperChamber[i] = ' ';
+                    result.Add((newMap, currentCost + steps * GetEnergy(processingChar)));
+                }                
+            }
+        }
+        return result;
+    }
+
+    private List<(AmphipodMap map, int cost)> MoveBurrowToChamber(int leftIndex, int currentCost, char expected)
     {
-        return $"[{uniqueId} - {id}: Location: {current.Id} - {current.Type}]";
+        var result = new List<(AmphipodMap map, int cost)>();
+        var workingBurrow = GetBurrow(expected);
+        var indexOfElement = workingBurrow.IndexOf(' ');
+
+        if(indexOfElement == 0) return new();
+        indexOfElement = indexOfElement > 0 ? indexOfElement : workingBurrow.Count();
+        indexOfElement -= 1;
+        char element = workingBurrow[indexOfElement];
+
+        // Move Left
+        var steps = 2; // Moving from burrow to chamber costs alway 2 at the beginning
+        steps += workingBurrow.Count(e => e == ' '); // Adds the movement within the burrow
+        for (int i = leftIndex; i >= 0; i--)
+        {
+            if (UpperChamber[i] != ' ') break;
+            var newMap = this.Clone();
+            newMap.GetBurrow(expected)[indexOfElement] = ' ';
+            newMap.UpperChamber[i] = element;
+            result.Add((newMap, currentCost + steps * GetEnergy(element)));
+            if (i == 1) steps += 1; else steps += 2;
+        }
+
+        // Move right
+        steps = 2; // Moving from burrow to chamber costs alway 2 at the beginning
+        steps += workingBurrow.Count(e => e == ' '); // Adds the movement within the burrow
+        for (int i = leftIndex + 1; i < UpperChamber.Count(); i++)
+        {
+            if (UpperChamber[i] != ' ') break;
+            var newMap = this.Clone();
+            newMap.GetBurrow(expected)[indexOfElement] = ' ';
+            newMap.UpperChamber[i] = element;
+            result.Add((newMap, currentCost + steps * GetEnergy(element)));
+            if (i == UpperChamber.Count() - 2) steps += 1; else steps += 2;
+        }
+        return result;
     }
-}
 
-class BurrowNode {
+    public List<char> GetBurrow(char element) {
+        return element switch {
+            'A' => BurrowForA,
+            'B' => BurrowForB,
+            'C' => BurrowForC,
+            'D' => BurrowForD,
+             _  => new List<char>()
+        };
+    } 
 
-    public int Id {get; init;}
-
-    public BurrowNodeType Type {get; init;}
-
-    public List<(BurrowNode node, int steps)> AdjacentBurrows {get; init;}     
-    
-    public BurrowNode(BurrowNodeType type, int id) {
-        Type = type;
-        AdjacentBurrows = new();
-        Id = id;
-    }
-
-    public void AddAdjacent(BurrowNode adj, int steps) {
-        AdjacentBurrows.Add((adj, steps));
-        adj.AdjacentBurrows.Add((this, steps));
-    }
-
-    public static int GetStepCost(char amphipod) {
-        return amphipod switch {
+    public int GetEnergy(char element) {
+        return element switch {
             'A' => 1,
             'B' => 10,
             'C' => 100,
             'D' => 1000,
              _  => 0
-        };        
+        };
     }
 
-    public void GetAvailableDestinations(int steps, List<(BurrowNode, int)> currentPaths, List<Amphipod> amphipods) {
-        if(currentPaths.Any(p => p.Item1 == this) || amphipods.Any(a => a.current == this)) {
-            return;
-        }
+    public int GetLeftUpperChamberIndexRelativeTo(char element) {
+        return element switch {
+            'A' => 1,
+            'B' => 2,
+            'C' => 3,
+            'D' => 4,
+             _  => 0
+        };
+    } 
 
-        currentPaths.Add((this, steps));
-
-        foreach (var adjacent in AdjacentBurrows)
-        {
-            adjacent.node.GetAvailableDestinations(steps + adjacent.steps, currentPaths, amphipods);
-        }
-    }
-
-    public override string ToString()
-    {
-        return $"{Id} - [{string.Join(",", AdjacentBurrows.Select(a => a.node.Id))}]";
+    public AmphipodMap Clone() {
+        var newMap = new AmphipodMap();
+        newMap.BurrowForA = BurrowForA.Select(c => c).ToList();
+        newMap.BurrowForB = BurrowForB.Select(c => c).ToList();
+        newMap.BurrowForC = BurrowForC.Select(c => c).ToList();
+        newMap.BurrowForD = BurrowForD.Select(c => c).ToList();
+        newMap.UpperChamber = UpperChamber.Select(c => c).ToList();
+        return newMap;
     }
 }
-
 class Day23 : IDayCommand {
 
-    public List<BurrowNode> BuildNodes(bool part02 = false) {
-        List<BurrowNode> nodes = Enumerable.Range(0,8).Select(n => new BurrowNode(BurrowNodeType.ROOM, n)).ToList();
-        nodes.AddRange(Enumerable.Range(8, 7).Select(n => new BurrowNode(BurrowNodeType.HALLWAY, n)));
-        if(part02) {
-            nodes.AddRange(Enumerable.Range(-22, 8).Reverse().Select(n => new BurrowNode(BurrowNodeType.ROOM, n)));
-        }
+    public int GetSmallestCost(AmphipodMap initialMap) {
+        var queue = new PriorityQueue<(AmphipodMap map, int cost), int>();
+        var processed = new HashSet<AmphipodMap>();
 
-       /* 
-          Mapping of the indexes (hex)
-          #############
-          #89.A.B.C.DE#
-          ### 1# 3# 5# 7###
-            # 0# 2# 4# 6#
-        (-) #21#19#17#15#
-        (-) #22#20#18#16#
-            #########  
-        */        
+        queue.Enqueue((initialMap, 0), 0);
 
-        if(part02) 
-        {
-            nodes[22].AddAdjacent(nodes[21],1);
-            nodes[21].AddAdjacent(nodes[0],1);
-            nodes[20].AddAdjacent(nodes[19],1);
-            nodes[19].AddAdjacent(nodes[2],1);
-            nodes[18].AddAdjacent(nodes[17],1);
-            nodes[17].AddAdjacent(nodes[4],1);
-            nodes[16].AddAdjacent(nodes[15],1);
-            nodes[15].AddAdjacent(nodes[6],1);
-        }
-
-        nodes[0].AddAdjacent(nodes[1],1);
-        nodes[1].AddAdjacent(nodes[9],2);
-        nodes[1].AddAdjacent(nodes[10],2);
-        
-        nodes[2].AddAdjacent(nodes[3],1);
-        nodes[3].AddAdjacent(nodes[10],2);
-        nodes[3].AddAdjacent(nodes[11],2);
-
-        nodes[4].AddAdjacent(nodes[5],1);
-        nodes[5].AddAdjacent(nodes[11],2);
-        nodes[5].AddAdjacent(nodes[12],2);        
-
-        nodes[6].AddAdjacent(nodes[7],1);
-        nodes[7].AddAdjacent(nodes[12],2);
-        nodes[7].AddAdjacent(nodes[13],2);       
-
-        nodes[8].AddAdjacent(nodes[9],1);
-        nodes[9].AddAdjacent(nodes[10],2);
-        nodes[10].AddAdjacent(nodes[11],2);
-        nodes[11].AddAdjacent(nodes[12],2);
-        nodes[12].AddAdjacent(nodes[13],2);
-        nodes[13].AddAdjacent(nodes[14],1);
-
-
-        return nodes;   
-    }
-
-    public string GetConfigurationString(List<Amphipod> amphipods) {
-        return string.Join(",", amphipods.OrderBy(a => a.id).Select(a => $"{a.id}:{a.current.Id}"));
-    }
-
-    public int FindLowestCost(List<BurrowNode> nodes, List<Amphipod> initialAmphipods) {
-        
-        var queue = new PriorityQueue<(List<Amphipod> amphipods, int cost), int>();
-        HashSet<string> evaluated = new ();
-        queue.Enqueue((initialAmphipods.Select(c => c).ToList(), 0), 0);
-
-        while(true) 
-        {
-            var setup = queue.Dequeue();
-            if(evaluated.Contains(GetConfigurationString(setup.amphipods))) continue;
-            evaluated.Add(GetConfigurationString(setup.amphipods));
-            if(setup.amphipods.All(c => c.IsOk)) {
-                PrintMapPart2(setup.amphipods);
-                return setup.cost;
+        while(true) {
+            var (currentMap, currentCost) = queue.Dequeue();
+            if(currentMap.IsFinished) {
+                return currentCost;
             }
 
-            var positions = setup.amphipods.ToDictionary(a => a.current.Id, a => a);
-            
-            foreach (var currAmphipod in setup.amphipods)
+            if(processed.Contains(currentMap)) {
+                continue;
+            }
+
+            processed.Add(currentMap);
+            //Console.WriteLine(currentMap.ToString());
+            //Console.WriteLine(currentCost.ToString());
+
+            var possibleMoves = currentMap.GetAllPossibleMoves(currentCost); 
+            foreach (var move in possibleMoves)
             {
-                var candidates = GetCandidates(currAmphipod, positions, nodes);
-                foreach (var candidate in candidates)
-                {
-                    var cost = candidate.steps * BurrowNode.GetStepCost(currAmphipod.id);
-                    var newAmphipodes = setup.amphipods.Where(a => a != currAmphipod).Append(new Amphipod(currAmphipod.id, currAmphipod.dest, candidate.node, currAmphipod.uniqueId)).ToList();                    
-                    if(!evaluated.Contains(GetConfigurationString(newAmphipodes))){
-                        queue.Enqueue((newAmphipodes, cost + setup.cost), cost + setup.cost);
-                    }
+                if(!processed.Contains(move.map)) {
+                    queue.Enqueue(move, move.cost);
                 }
             }
+
         }
-
     }
 
-    private void PrintMap(List<Amphipod> amphipods) {
-          var s = String.Empty;
-          s += "#############"+ Environment.NewLine;
-          s += "#89.G.H.I.JK#"+ Environment.NewLine;
-          s += "###1#3#5#7###"+ Environment.NewLine;
-          s += "  #0#2#4#6#  "+ Environment.NewLine;
-          s += "  #########  "+ Environment.NewLine;
+    public AmphipodMap Part01Map(List<string> input) {
+        var map = new AmphipodMap();
 
-          var locations = amphipods.ToDictionary(a => a.current.Id, a => a.id);
+        map.BurrowForA[0] = input[3][3];
+        map.BurrowForA[1] = input[2][3];
 
-          s = s.Replace('0', locations.GetValueOrDefault(0, ' '));
-          s = s.Replace('1', locations.GetValueOrDefault(1, ' '));
-          s = s.Replace('2', locations.GetValueOrDefault(2, ' '));
-          s = s.Replace('3', locations.GetValueOrDefault(3, ' '));
-          s = s.Replace('4', locations.GetValueOrDefault(4, ' '));
-          s = s.Replace('5', locations.GetValueOrDefault(5, ' '));
-          s = s.Replace('6', locations.GetValueOrDefault(6, ' '));
-          s = s.Replace('7', locations.GetValueOrDefault(7, ' '));
-          s = s.Replace('8', locations.GetValueOrDefault(8, ' '));
-          s = s.Replace('9', locations.GetValueOrDefault(9, ' '));
-          s = s.Replace('G', locations.GetValueOrDefault(10, ' '));
-          s = s.Replace('H', locations.GetValueOrDefault(11, ' '));
-          s = s.Replace('I', locations.GetValueOrDefault(12, ' '));
-          s = s.Replace('J', locations.GetValueOrDefault(13, ' '));
-          s = s.Replace('K', locations.GetValueOrDefault(14, ' '));
+        map.BurrowForB[0] = input[3][5];
+        map.BurrowForB[1] = input[2][5];
 
-        Console.WriteLine(s);
-    }
+        map.BurrowForC[0] = input[3][7];
+        map.BurrowForC[1] = input[2][7];
 
-    private void PrintMapPart2(List<Amphipod> amphipods) {
-          var s = String.Empty;
-          s += "#############"+ Environment.NewLine;
-          s += "#89.G.H.I.JK#"+ Environment.NewLine;
-          s += "###1#3#5#7###"+ Environment.NewLine;
-          s += "  #0#2#4#6#  "+ Environment.NewLine;
-          s += "  #R#P#N#L#  "+ Environment.NewLine;
-          s += "  #S#Q#O#M#  "+ Environment.NewLine;
-          s += "  #########  "+ Environment.NewLine;
-
-          var locations = amphipods.ToDictionary(a => a.current.Id, a => a.id);
-
-          s = s.Replace('0', locations.GetValueOrDefault(0, ' '));
-          s = s.Replace('1', locations.GetValueOrDefault(1, ' '));
-          s = s.Replace('2', locations.GetValueOrDefault(2, ' '));
-          s = s.Replace('3', locations.GetValueOrDefault(3, ' '));
-          s = s.Replace('4', locations.GetValueOrDefault(4, ' '));
-          s = s.Replace('5', locations.GetValueOrDefault(5, ' '));
-          s = s.Replace('6', locations.GetValueOrDefault(6, ' '));
-          s = s.Replace('7', locations.GetValueOrDefault(7, ' '));
-          s = s.Replace('8', locations.GetValueOrDefault(8, ' '));
-          s = s.Replace('9', locations.GetValueOrDefault(9, ' '));
-          s = s.Replace('G', locations.GetValueOrDefault(10, ' '));
-          s = s.Replace('H', locations.GetValueOrDefault(11, ' '));
-          s = s.Replace('I', locations.GetValueOrDefault(12, ' '));
-          s = s.Replace('J', locations.GetValueOrDefault(13, ' '));
-          s = s.Replace('K', locations.GetValueOrDefault(14, ' '));
-          s = s.Replace('L', locations.GetValueOrDefault(-15, ' '));
-          s = s.Replace('M', locations.GetValueOrDefault(-16, ' '));
-          s = s.Replace('N', locations.GetValueOrDefault(-17, ' '));
-          s = s.Replace('O', locations.GetValueOrDefault(-18, ' '));
-          s = s.Replace('P', locations.GetValueOrDefault(-19, ' '));
-          s = s.Replace('Q', locations.GetValueOrDefault(-20, ' '));
-          s = s.Replace('R', locations.GetValueOrDefault(-21, ' '));
-          s = s.Replace('S', locations.GetValueOrDefault(-22, ' '));
-
-        Console.WriteLine(s);
+        map.BurrowForD[0] = input[3][9];
+        map.BurrowForD[1] = input[2][9];
+        return map;
     }
 
 
-    public Amphipod? GetAmphipodInNode(BurrowNode node, List<Amphipod> amphipods) {
-        return amphipods.FirstOrDefault(a => a?.current == node, null);
-    }
+    public AmphipodMap Part02Map(List<string> input) {
+        var map = Part01Map(input);
 
-    private List<(BurrowNode node, int steps)> GetCandidates(Amphipod amphipod, Dictionary<int, Amphipod> positionAndAmphipods, List<BurrowNode> nodes)
-    {   
-        var finalDestinations = new List<(BurrowNode node, int steps)>();        
-        var occupied = positionAndAmphipods.Select(a => a.Value).ToList();
-        amphipod.current.AdjacentBurrows.ForEach(burrow => burrow.node.GetAvailableDestinations(burrow.steps, finalDestinations,occupied));
-        
-        if(amphipod.current.Type == BurrowNodeType.ROOM) {
-            // If in the expected destination, only moves if blocking someone else 
-            if(amphipod.IsOk) {
-                // Determines if there is an node "behind" that is not equal to the expected one
-                var destIndex = amphipod.dest.FindIndex(a => a == amphipod.current);
-                var isBlocking = false;
-                for (int i = destIndex - 1; i >= 0; i--)
-                {            
-                    var nodeBehind = amphipod.dest[i];
-                    if(positionAndAmphipods.ContainsKey(nodeBehind.Id)) {
-                        isBlocking = isBlocking || positionAndAmphipods[nodeBehind.Id].id != amphipod.id;
-                    }
-                }
-                
-                if(!isBlocking) {
-                    return new();              
-                }
-            } 
-        } 
+        map.BurrowForA.Insert(1, 'D');
+        map.BurrowForA.Insert(2, 'D');
 
-        var hallways = finalDestinations.Where(dest => dest.node.Type == BurrowNodeType.HALLWAY).ToList();
-        if(amphipod.current.Type == BurrowNodeType.HALLWAY) {
-            hallways.Clear();
-        }
+        map.BurrowForB.Insert(1, 'B');
+        map.BurrowForB.Insert(2, 'C');
 
-        // Do not move to rooms that are not destination and are all empty or containing others of the same type
-        if(!amphipod.dest.All(d => !positionAndAmphipods.ContainsKey(d.Id) || positionAndAmphipods[d.Id].id == amphipod.id)) {                
-            return hallways;
-        }
-        finalDestinations = finalDestinations.Where(dest => amphipod.dest.Contains(dest.node)).OrderBy(dest => dest.node.Id).ToList();
-        if(finalDestinations.Count() > 0){
-            return hallways.Append(finalDestinations.First()).ToList();
-        }
-        return hallways;
-    }
+        map.BurrowForC.Insert(1, 'A');
+        map.BurrowForC.Insert(2, 'B');
+
+        map.BurrowForD.Insert(1, 'C');
+        map.BurrowForD.Insert(2, 'A');
+
+        return map;
+    }    
 
     public string Execute() {
-        /* 
-        My puzzle input (I will not parse it):
-#############
-#...........#
-###B#C#B#D###
-  #D#C#B#A#
-  #D#B#A#C#
-  #A#D#C#A#
-  #########
-         
-          ### 1# 3# 5# 7###
-            # 0# 2# 4# 6#
-        (-) #21#19#17#15#
-        (-) #22#20#18#16#
-            #########  
-        */
-        var nodesPart02 = BuildNodes(true);          
-        var destA = new List<BurrowNode>(){nodesPart02[22], nodesPart02[21], nodesPart02[0], nodesPart02[1]};
-        var destB = new List<BurrowNode>(){nodesPart02[20], nodesPart02[19], nodesPart02[2], nodesPart02[3]};
-        var destC = new List<BurrowNode>(){nodesPart02[18], nodesPart02[17], nodesPart02[4], nodesPart02[5]};
-        var destD = new List<BurrowNode>(){nodesPart02[16], nodesPart02[15], nodesPart02[6], nodesPart02[7]};
+        
+        var input = new FileReader(23).Read().ToList();
+        var map01 = Part01Map(input);
+        var map02 = Part02Map(input);
 
-
-        List<Amphipod> amphipodsPart02 = new () {
-            new ('A', destA, nodesPart02[ 1], 0),
-            new ('A', destA, nodesPart02[ 6], 1),
-            new ('A', destA, nodesPart02[17], 2),
-            new ('A', destA, nodesPart02[20], 3),
-            new ('B', destB, nodesPart02[ 5], 4),
-            new ('B', destB, nodesPart02[ 4], 5),
-            new ('B', destB, nodesPart02[19], 6),
-            new ('B', destB, nodesPart02[22], 7),
-            new ('C', destC, nodesPart02[ 2], 8),
-            new ('C', destC, nodesPart02[ 3], 9),
-            new ('C', destC, nodesPart02[16], 10),
-            new ('C', destC, nodesPart02[15], 11),
-            new ('D', destD, nodesPart02[ 7], 12),
-            new ('D', destD, nodesPart02[ 0], 13),
-            new ('D', destD, nodesPart02[21], 14),
-            new ('D', destD, nodesPart02[18], 15),
-        };
-
-        PrintMapPart2(amphipodsPart02);
-
-        var nodesPart01 = BuildNodes();             
-        List<Amphipod> amphipodsPart01 = new () {
-            new ('A', new (){nodesPart01[0], nodesPart01[1]}, nodesPart01[1], 0),
-            new ('A', new (){nodesPart01[0], nodesPart01[1]}, nodesPart01[2], 1),
-            new ('B', new (){nodesPart01[2], nodesPart01[3]}, nodesPart01[0], 2),
-            new ('B', new (){nodesPart01[2], nodesPart01[3]}, nodesPart01[5], 3),
-            new ('C', new (){nodesPart01[4], nodesPart01[5]}, nodesPart01[3], 4),
-            new ('C', new (){nodesPart01[4], nodesPart01[5]}, nodesPart01[6], 5),
-            new ('D', new (){nodesPart01[6], nodesPart01[7]}, nodesPart01[4], 6),
-            new ('D', new (){nodesPart01[6], nodesPart01[7]}, nodesPart01[7], 7)
-        };        
-
-        PrintMap(amphipodsPart01);
-
-        return $"The Lowest steps for part 01 is {FindLowestCost(nodesPart01, amphipodsPart01)} and for part 02 is {FindLowestCost(nodesPart02, amphipodsPart02)}";
-
+        return $"Smallest energy part 01 {GetSmallestCost(map01)} and part 02 {GetSmallestCost(map02)}";    
     }
-
 }
